@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://querydock.run/sitemap-index.xml
