@@ -6,8 +6,18 @@ function secure(response, {api=false, embed=false}={}) {
  headers.set('Referrer-Policy','strict-origin-when-cross-origin');
  headers.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');
  if(api) headers.set('Cache-Control','no-store');
- if(embed) {headers.delete('X-Frame-Options');headers.set('Content-Security-Policy',"frame-ancestors *; base-uri 'self'; object-src 'none'");}
- if(!embed) {headers.set('X-Frame-Options','DENY');headers.set('Content-Security-Policy',"frame-ancestors 'none'; base-uri 'self'; object-src 'none'");}
+ // CSP lists are comma-separated intersecting policies. Keep the app's resource
+ // restrictions; only the explicit public embed route may replace framing.
+ const upstreamPolicy=headers.get('Content-Security-Policy');
+ if(embed) {
+  headers.delete('X-Frame-Options');
+  headers.delete('Content-Security-Policy');
+  if(upstreamPolicy) {
+   const policies=upstreamPolicy.split(',').map(policy=>policy.split(';').map(directive=>directive.replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g,'')).filter(directive=>directive&&!/^frame-ancestors(?:[\t\n\f\r ]|$)/i.test(directive)).join('; ')).filter(Boolean);
+   if(policies.length) headers.set('Content-Security-Policy',policies.join(', '));
+  }
+ } else headers.set('X-Frame-Options','DENY');
+ headers.append('Content-Security-Policy',`frame-ancestors ${embed?'*':"'none'"}; base-uri 'self'; object-src 'none'`);
  return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
 }
 export default {
