@@ -7,7 +7,7 @@ function isEmbed(path) {
 function secure(response, {api=false, embed=false}={}) {
  const headers=new Headers(response.headers);
  headers.set('X-Content-Type-Options','nosniff');
- headers.set('Referrer-Policy','strict-origin-when-cross-origin');
+ headers.set('Referrer-Policy','no-referrer');
  headers.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');
  if(api) headers.set('Cache-Control','no-store');
  // CSP lists are comma-separated intersecting policies. Keep the app's resource
@@ -40,8 +40,9 @@ export default {
    try { return secure(await fetch(new Request(upstream,{method:request.method,headers,body:['GET','HEAD'].includes(request.method)?undefined:request.body,redirect:'manual'})),{api:true}); }
    catch { return secure(unavailable(),{api:true}); }
   }
-  if(isPath(path,'/sql')||isPath(path,'/_querydock')) {
+  if(isPath(path,'/sql')||isPath(path,'/_querydock')||/^\/(en|ru)(?:(?:\/examples)|(?:\/sql\/(postgres|sqlite|duckdb)\/run))?\/?$/.test(path)) {
    if(env.QUERYDOCK_APP) return secure(await env.QUERYDOCK_APP.fetch(request),{embed:isEmbed(path)});
+   if(/^\/(en|ru)(?:(?:\/examples)|(?:\/sql\/(postgres|sqlite|duckdb)\/run))?\/?$/.test(path)) return secure(await env.ASSETS.fetch(request));
    if(isPath(path,'/_querydock')) return secure(new Response('Application assets are not available yet.',{status:503,headers:{'Cache-Control':'no-store'}}));
    if(!['GET','HEAD'].includes(request.method)) return secure(unavailable(),{api:true});
    const locale=url.searchParams.get('lang')==='ru'||url.searchParams.get('locale')==='ru'?'ru':'en';

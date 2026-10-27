@@ -37,3 +37,12 @@ test('only valid public embeds replace framing across all upstream CSP policies'
  }
 });
 test('all localized generated HTML contains reciprocal SEO and truthful copy',async()=>{const sitemap=await readFile('dist/sitemap-0.xml','utf8');for(const locale of ['en','ru'])for(const suffix of ['','graphql/','privacy/','terms/','sql/postgres/','sql/sqlite/','sql/duckdb/']){const html=await readFile(`dist/${locale}/${suffix}index.html`,'utf8');assert.match(html,new RegExp(`lang="${locale}"`));assert.ok(html.includes(`https://querydock.run/${locale}/${suffix}`));for(const alternate of ['en','ru'])assert.ok(html.includes(`https://querydock.run/${alternate}/${suffix}`));assert.ok(sitemap.includes(`https://querydock.run/${locale}/${suffix}`));assert.doesNotMatch(html,/<script\b|googletagmanager|fonts.googleapis/);assert.doesNotMatch(html,/href="\/sql\//);if(suffix==='graphql/')assert.ok(html.includes(locale==='en'?'Coming soon':'Скоро'));}assert.ok((await readFile('dist/404.html','utf8')).includes('noindex,follow'));});
+
+test('only exact localized home and examples routes reach the app binding',async()=>{
+ const seen=[]; const QUERYDOCK_APP={fetch:async req=>{seen.push(new URL(req.url).pathname);return new Response('tool',{headers:{'Referrer-Policy':'no-referrer'}});}};
+ for(const path of ['/en','/en/','/ru/','/en/examples/','/ru/examples','/en/sql/postgres/run/','/ru/sql/duckdb/run/','/ru/sql/sqlite/run']){const r=await request(path,{QUERYDOCK_APP});assert.equal(await r.text(),'tool');assert.equal(r.headers.get('referrer-policy'),'no-referrer');assert.equal(r.headers.get('x-frame-options'),'DENY');}
+ for(const path of ['/en/sql/postgres/','/ru/privacy/','/en/graphql/','/ru/examples-missing','/en/missing']) assert.notEqual(await(await request(path,{QUERYDOCK_APP})).text(),'tool');
+ assert.equal(seen.length,8);
+});
+
+test('engine guides retain selected locale and engine in clean tool entry URLs',async()=>{for(const locale of ['en','ru'])for(const engine of ['postgres','sqlite','duckdb']){const html=await readFile(`dist/${locale}/sql/${engine}/index.html`,'utf8');assert.ok(html.includes(`href="/${locale}/sql/${engine}/run/"`));assert.doesNotMatch(html,/\?lang=/);}});
