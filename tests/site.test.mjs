@@ -9,11 +9,11 @@ test('prelaunch SQL routes redirect to localized useful guides',async()=>{for(co
 test('API and app assets fail honestly without bindings',async()=>{for(const path of ['/api/querydock','/api/querydock/fiddles','/_querydock/a.js']){const r=await request(path);assert.equal(r.status,503);assert.equal(r.headers.get('cache-control'),'no-store');}assert.equal((await request('/sql','', 'POST')).status,503);});
 test('route boundaries and unknown paths stay with static 404',async()=>{for(const path of ['/missing','/sql-missing','/api/querydock-missing']){const r=await request(path);assert.equal(r.status,404);}assert.equal((await request('/en/sql/postgres/')).status,200);});
 test('app binding owns nested SQL and asset requests',async()=>{for(const path of ['/sql','/sql/postgres/fiddle/a','/_querydock/a.wasm']){let observed;const r=await request(path,{QUERYDOCK_APP:{fetch:async req=>{observed=req.url;return new Response('app');}}});assert.equal(await r.text(),'app');assert.equal(observed,`https://querydock.run${path}`);}});
-test('security headers and public embed framing',async()=>{assert.equal((await request('/en/')).headers.get('x-frame-options'),'DENY');const r=await request('/sql/example/3/embed',{QUERYDOCK_APP:{fetch:async()=>new Response('embed')}});assert.equal(r.headers.get('x-frame-options'),null);assert.equal(r.headers.get('x-content-type-options'),'nosniff');for(const invalid of ['/sql/embed/a','/sql/example/0/embed'])assert.equal((await request(invalid,{QUERYDOCK_APP:{fetch:async()=>new Response('app')}})).headers.get('x-frame-options'),'DENY');});
+test('security headers and public embed framing',async()=>{assert.equal((await request('/en/')).headers.get('x-frame-options'),'DENY');const r=await request('/sql/abcdefghijklmnop/3/embed',{QUERYDOCK_APP:{fetch:async()=>new Response('embed')}});assert.equal(r.headers.get('x-frame-options'),null);assert.equal(r.headers.get('x-content-type-options'),'nosniff');for(const invalid of ['/sql/embed/a','/sql/abcdefghijklmnop/0/embed','/sql/short/1/embed','/sql/abcdefghijklmnop/9007199254740992/embed'])assert.equal((await request(invalid,{QUERYDOCK_APP:{fetch:async()=>new Response('app')}})).headers.get('x-frame-options'),'DENY');});
 test('invalid API deployment origin fails closed',async()=>{for(const API_ORIGIN of ['not-a-url','http://example.com','https://example.com/other','https://user:pass@example.com'])assert.equal((await request('/api/querydock',{API_ORIGIN})).status,503);});
 test('embed framing rewrite preserves non-ASCII and non-CSP whitespace exactly',async()=>{
  const resourcePolicy="script-src 'nonce-abc'\v; \u00a0sandbox; frame-ancestors\u00a0'none'";
- const response=await request('/sql/example/3/embed',{QUERYDOCK_APP:{fetch:async()=>new Response('app',{headers:{'Content-Security-Policy':resourcePolicy+"; \tFRAME-ANCESTORS\t'none' \t"}})}});
+ const response=await request('/sql/abcdefghijklmnop/3/embed',{QUERYDOCK_APP:{fetch:async()=>new Response('app',{headers:{'Content-Security-Policy':resourcePolicy+"; \tFRAME-ANCESTORS\t'none' \t"}})}});
  assert.equal(response.headers.get('content-security-policy'),resourcePolicy+", frame-ancestors *; base-uri 'self'; object-src 'none'");
 });
 test('workspace preserves every upstream CSP policy and adds framing protection',async()=>{
@@ -27,10 +27,10 @@ test('workspace preserves every upstream CSP policy and adds framing protection'
 test('only valid public embeds replace framing across all upstream CSP policies',async()=>{
  const upstream="default-src 'self'; FRAME-ANCESTORS\t'none'; connect-src 'none', frame-ancestors 'self'; script-src 'nonce-abc'; frame-ancestors https://example.com, frame-ancestors 'none'";
  const binding={fetch:async()=>new Response('app',{headers:{'Content-Security-Policy':upstream,'X-Frame-Options':'SAMEORIGIN'}})};
- const response=await request('/sql/example/3/embed',{QUERYDOCK_APP:binding});
+ const response=await request('/sql/abcdefghijklmnop/3/embed',{QUERYDOCK_APP:binding});
  assert.equal(response.headers.get('content-security-policy'),"default-src 'self'; connect-src 'none', script-src 'nonce-abc', frame-ancestors *; base-uri 'self'; object-src 'none'");
  assert.equal(response.headers.get('x-frame-options'),null);
- for(const path of ['/sql/example/0/embed','/sql/example/3/embed/extra','/sql/embed/example']) {
+ for(const path of ['/sql/abcdefghijklmnop/0/embed','/sql/abcdefghijklmnop/3/embed/extra','/sql/embed/example']) {
   const invalid=await request(path,{QUERYDOCK_APP:binding});
   assert.equal(invalid.headers.get('content-security-policy'),upstream+", frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
   assert.equal(invalid.headers.get('x-frame-options'),'DENY');

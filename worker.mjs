@@ -1,5 +1,9 @@
 const unavailable = () => Response.json({error:'not_available',message:'QueryDock execution and sharing are not available yet.'},{status:503,headers:{'Cache-Control':'no-store','Retry-After':'3600','X-Content-Type-Options':'nosniff'}});
 const isPath = (path, prefix) => path === prefix || path.startsWith(`${prefix}/`);
+function isEmbed(path) {
+ const route=/^\/sql\/([A-Za-z0-9_-]{16,128})\/([1-9][0-9]*)\/embed\/?$/.exec(path);
+ return !!route && Number.isSafeInteger(Number(route[2]));
+}
 function secure(response, {api=false, embed=false}={}) {
  const headers=new Headers(response.headers);
  headers.set('X-Content-Type-Options','nosniff');
@@ -37,7 +41,7 @@ export default {
    catch { return secure(unavailable(),{api:true}); }
   }
   if(isPath(path,'/sql')||isPath(path,'/_querydock')) {
-   if(env.QUERYDOCK_APP) return secure(await env.QUERYDOCK_APP.fetch(request),{embed:/^\/sql\/[^/]+\/[1-9]\d*\/embed\/?$/.test(path)});
+   if(env.QUERYDOCK_APP) return secure(await env.QUERYDOCK_APP.fetch(request),{embed:isEmbed(path)});
    if(isPath(path,'/_querydock')) return secure(new Response('Application assets are not available yet.',{status:503,headers:{'Cache-Control':'no-store'}}));
    if(!['GET','HEAD'].includes(request.method)) return secure(unavailable(),{api:true});
    const locale=url.searchParams.get('lang')==='ru'||url.searchParams.get('locale')==='ru'?'ru':'en';
