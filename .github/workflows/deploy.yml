@@ -20,7 +20,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-      - run: pnpm build
       - run: pnpm test
       - run: pnpm exec wrangler deploy
         env:

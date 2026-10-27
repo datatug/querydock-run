@@ -11,4 +11,29 @@ test('route boundaries and unknown paths stay with static 404',async()=>{for(con
 test('app binding owns nested SQL and asset requests',async()=>{for(const path of ['/sql','/sql/postgres/fiddle/a','/_querydock/a.wasm']){let observed;const r=await request(path,{QUERYDOCK_APP:{fetch:async req=>{observed=req.url;return new Response('app');}}});assert.equal(await r.text(),'app');assert.equal(observed,`https://querydock.run${path}`);}});
 test('security headers and public embed framing',async()=>{assert.equal((await request('/en/')).headers.get('x-frame-options'),'DENY');const r=await request('/sql/example/3/embed',{QUERYDOCK_APP:{fetch:async()=>new Response('embed')}});assert.equal(r.headers.get('x-frame-options'),null);assert.equal(r.headers.get('x-content-type-options'),'nosniff');for(const invalid of ['/sql/embed/a','/sql/example/0/embed'])assert.equal((await request(invalid,{QUERYDOCK_APP:{fetch:async()=>new Response('app')}})).headers.get('x-frame-options'),'DENY');});
 test('invalid API deployment origin fails closed',async()=>{for(const API_ORIGIN of ['not-a-url','http://example.com','https://example.com/other','https://user:pass@example.com'])assert.equal((await request('/api/querydock',{API_ORIGIN})).status,503);});
+test('embed framing rewrite preserves non-ASCII and non-CSP whitespace exactly',async()=>{
+ const resourcePolicy="script-src 'nonce-abc'\v; \u00a0sandbox; frame-ancestors\u00a0'none'";
+ const response=await request('/sql/example/3/embed',{QUERYDOCK_APP:{fetch:async()=>new Response('app',{headers:{'Content-Security-Policy':resourcePolicy+"; \tFRAME-ANCESTORS\t'none' \t"}})}});
+ assert.equal(response.headers.get('content-security-policy'),resourcePolicy+", frame-ancestors *; base-uri 'self'; object-src 'none'");
+});
+test('workspace preserves every upstream CSP policy and adds framing protection',async()=>{
+ const upstream="default-src 'self'; script-src 'nonce-abc'; connect-src 'none'; base-uri 'none', worker-src 'self'; object-src 'none'; frame-ancestors 'self'";
+ const reportOnly="script-src 'none'; report-to csp";
+ const response=await request('/sql/postgres',{QUERYDOCK_APP:{fetch:async()=>new Response('app',{headers:{'Content-Security-Policy':upstream,'Content-Security-Policy-Report-Only':reportOnly}})}});
+ assert.equal(response.headers.get('content-security-policy'),upstream+", frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
+ assert.equal(response.headers.get('content-security-policy-report-only'),reportOnly);
+ assert.equal(response.headers.get('x-frame-options'),'DENY');
+});
+test('only valid public embeds replace framing across all upstream CSP policies',async()=>{
+ const upstream="default-src 'self'; FRAME-ANCESTORS\t'none'; connect-src 'none', frame-ancestors 'self'; script-src 'nonce-abc'; frame-ancestors https://example.com, frame-ancestors 'none'";
+ const binding={fetch:async()=>new Response('app',{headers:{'Content-Security-Policy':upstream,'X-Frame-Options':'SAMEORIGIN'}})};
+ const response=await request('/sql/example/3/embed',{QUERYDOCK_APP:binding});
+ assert.equal(response.headers.get('content-security-policy'),"default-src 'self'; connect-src 'none', script-src 'nonce-abc', frame-ancestors *; base-uri 'self'; object-src 'none'");
+ assert.equal(response.headers.get('x-frame-options'),null);
+ for(const path of ['/sql/example/0/embed','/sql/example/3/embed/extra','/sql/embed/example']) {
+  const invalid=await request(path,{QUERYDOCK_APP:binding});
+  assert.equal(invalid.headers.get('content-security-policy'),upstream+", frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
+  assert.equal(invalid.headers.get('x-frame-options'),'DENY');
+ }
+});
 test('all localized generated HTML contains reciprocal SEO and truthful copy',async()=>{const sitemap=await readFile('dist/sitemap-0.xml','utf8');for(const locale of ['en','ru'])for(const suffix of ['','graphql/','privacy/','terms/','sql/postgres/','sql/sqlite/','sql/duckdb/']){const html=await readFile(`dist/${locale}/${suffix}index.html`,'utf8');assert.match(html,new RegExp(`lang="${locale}"`));assert.ok(html.includes(`https://querydock.run/${locale}/${suffix}`));for(const alternate of ['en','ru'])assert.ok(html.includes(`https://querydock.run/${alternate}/${suffix}`));assert.ok(sitemap.includes(`https://querydock.run/${locale}/${suffix}`));assert.doesNotMatch(html,/<script\b|googletagmanager|fonts.googleapis/);assert.doesNotMatch(html,/href="\/sql\//);if(suffix==='graphql/')assert.ok(html.includes(locale==='en'?'Coming soon':'Скоро'));}assert.ok((await readFile('dist/404.html','utf8')).includes('noindex,follow'));});
