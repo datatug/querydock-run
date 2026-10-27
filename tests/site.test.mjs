@@ -40,9 +40,11 @@ test('all localized generated HTML contains reciprocal SEO and truthful copy',as
 
 test('only exact localized home and examples routes reach the app binding',async()=>{
  const seen=[]; const QUERYDOCK_APP={fetch:async req=>{seen.push(new URL(req.url).pathname);return new Response('tool',{headers:{'Referrer-Policy':'no-referrer'}});}};
- for(const path of ['/en','/en/','/ru/','/en/examples/','/ru/examples','/en/sql/postgres/run/','/ru/sql/duckdb/run/','/ru/sql/sqlite/run']){const r=await request(path,{QUERYDOCK_APP});assert.equal(await r.text(),'tool');assert.equal(r.headers.get('referrer-policy'),'no-referrer');assert.equal(r.headers.get('x-frame-options'),'DENY');}
+ for(const path of ['/en/','/ru/','/en/examples/','/ru/examples/','/en/sql/postgres/run/','/ru/sql/duckdb/run/','/ru/sql/sqlite/run/']){const r=await request(path,{QUERYDOCK_APP});assert.equal(await r.text(),'tool');assert.equal(r.headers.get('referrer-policy'),'no-referrer');assert.equal(r.headers.get('x-frame-options'),'DENY');}
  for(const path of ['/en/sql/postgres/','/ru/privacy/','/en/graphql/','/ru/examples-missing','/en/missing']) assert.notEqual(await(await request(path,{QUERYDOCK_APP})).text(),'tool');
- assert.equal(seen.length,8);
+ assert.equal(seen.length,7);
 });
 
 test('engine guides retain selected locale and engine in clean tool entry URLs',async()=>{for(const locale of ['en','ru'])for(const engine of ['postgres','sqlite','duckdb']){const html=await readFile(`dist/${locale}/sql/${engine}/index.html`,'utf8');assert.ok(html.includes(`href="/${locale}/sql/${engine}/run/"`));assert.doesNotMatch(html,/\?lang=/);}});
+
+test('localized app aliases canonicalize before binding without dropping URL fields',async()=>{for(const path of ['/en','/ru/examples','/en/sql/sqlite/run']){let called=false;const r=await request(path+'?keep=value',{QUERYDOCK_APP:{fetch:async()=>{called=true;return new Response('unexpected');}}});assert.equal(r.status,308);assert.equal(new URL(r.headers.get('location')).pathname,path+'/');assert.equal(new URL(r.headers.get('location')).search,'?keep=value');assert.equal(called,false);}});

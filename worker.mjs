@@ -29,6 +29,7 @@ export default {
   const url=new URL(request.url); const path=url.pathname;
   if(path==='/') return secure(Response.redirect(new URL('/en/',url),302));
   if(path==='/graphql'||path==='/graphql/') return secure(Response.redirect(new URL('/en/graphql/',url),302));
+  if(/^\/(en|ru)(?:(?:\/examples)|(?:\/sql\/(postgres|sqlite|duckdb)\/run))?$/.test(path)) { url.pathname += '/'; return secure(Response.redirect(url,308)); }
   if(isPath(path,'/api/querydock')) {
    if(!env.API_ORIGIN) return secure(unavailable(),{api:true});
    // Deployment-only fixed origin; no request parameter can select an upstream.
