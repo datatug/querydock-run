@@ -4,7 +4,29 @@
   "main": "worker.mjs",
   "compatibility_date": "2026-10-26",
   "workers_dev": true,
-  "routes": [{"pattern":"querydock.run","custom_domain":true}],
-  "assets": {"directory":"./dist","binding":"ASSETS","run_worker_first":true,"html_handling":"auto-trailing-slash","not_found_handling":"404-page"},
-  "observability": {"enabled":false}
+  "routes": [
+    {
+      "pattern": "querydock.run",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "observability": {
+    "enabled": false
+  },
+  "services": [
+    {
+      "binding": "QUERYDOCK_APP",
+      "service": "querydock-app"
+    }
+  ],
+  "vars": {
+    "API_ORIGIN": "https://querydock-go-354fvnqbaa-ew.a.run.app"
+  }
 }
