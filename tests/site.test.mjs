@@ -6,7 +6,21 @@ const assets={fetch:async req=>new Response('asset',{status:new URL(req.url).pat
 const request=(path,env={},method='GET')=>worker.fetch(new Request(`https://querydock.run${path}`,{method}),{ASSETS:assets,...env});
 test('root and GraphQL have explicit redirects',async()=>{for(const [path,target] of [['/','/en/'],['/graphql','/en/graphql/'],['/graphql/','/en/graphql/']]){const r=await request(path);assert.equal(r.status,302);assert.equal(new URL(r.headers.get('location')).pathname,target);}});
 test('prelaunch SQL routes redirect to localized useful guides',async()=>{for(const engine of ['postgres','sqlite','duckdb']){const r=await request(`/sql/${engine}/?lang=ru`);assert.equal(r.status,302);assert.equal(new URL(r.headers.get('location')).pathname,`/ru/sql/${engine}/`);}assert.equal(new URL((await request('/sql')).headers.get('location')).pathname,'/en/');});
-test('API and app assets fail honestly without bindings',async()=>{for(const path of ['/api/querydock','/api/querydock/fiddles','/_querydock/a.js']){const r=await request(path);assert.equal(r.status,503);assert.equal(r.headers.get('cache-control'),'no-store');}assert.equal((await request('/sql','', 'POST')).status,503);});
+test('API and app assets fail honestly without bindings',async()=>{for(const path of ['/api/querydock','/api/querydock/fiddles','/_querydock/a.js']){const r=await request(path);assert.equal(r.status,503);assert.equal(r.headers.get('cache-control'),path.startsWith('/api/')?'no-store, must-revalidate':'no-store');}assert.equal((await request('/sql','', 'POST')).status,503);});
+test('API proxy retains revocation cache policy on public reads and failures',async(t)=>{
+ let status=200;
+ t.mock.method(globalThis,'fetch',async upstream=>{
+  assert.equal(upstream.url,'https://fixed-api.example/api/querydock/fiddles/abcdefghijklmnop/revisions/1');
+  return new Response('controlled snapshot',{status,headers:{'Cache-Control':status===200?'no-store, must-revalidate':'public, max-age=3600','Access-Control-Allow-Origin':'*'}});
+ });
+ for(status of [200,404,503]){
+  const response=await request('/api/querydock/fiddles/abcdefghijklmnop/revisions/1',{API_ORIGIN:'https://fixed-api.example'});
+  assert.equal(response.status,status);
+  assert.equal(response.headers.get('cache-control'),'no-store, must-revalidate');
+  assert.equal(response.headers.get('access-control-allow-origin'),'*');
+  assert.equal(await response.text(),'controlled snapshot');
+ }
+});
 test('route boundaries and unknown paths stay with static 404',async()=>{for(const path of ['/missing','/sql-missing','/api/querydock-missing']){const r=await request(path);assert.equal(r.status,404);}assert.equal((await request('/en/sql/postgres/')).status,200);});
 test('app binding owns nested SQL and asset requests',async()=>{for(const path of ['/sql','/sql/postgres/fiddle/a','/_querydock/a.wasm']){let observed;const r=await request(path,{QUERYDOCK_APP:{fetch:async req=>{observed=req.url;return new Response('app');}}});assert.equal(await r.text(),'app');assert.equal(observed,`https://querydock.run${path}`);}});
 test('security headers and public embed framing',async()=>{assert.equal((await request('/en/')).headers.get('x-frame-options'),'DENY');const r=await request('/sql/abcdefghijklmnop/3/embed',{QUERYDOCK_APP:{fetch:async()=>new Response('embed')}});assert.equal(r.headers.get('x-frame-options'),null);assert.equal(r.headers.get('x-content-type-options'),'nosniff');for(const invalid of ['/sql/embed/a','/sql/abcdefghijklmnop/0/embed','/sql/short/1/embed','/sql/abcdefghijklmnop/9007199254740992/embed'])assert.equal((await request(invalid,{QUERYDOCK_APP:{fetch:async()=>new Response('app')}})).headers.get('x-frame-options'),'DENY');});

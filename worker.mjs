@@ -9,7 +9,7 @@ function secure(response, {api=false, embed=false}={}) {
  headers.set('X-Content-Type-Options','nosniff');
  headers.set('Referrer-Policy','no-referrer');
  headers.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');
- if(api) headers.set('Cache-Control','no-store');
+ if(api) headers.set('Cache-Control','no-store, must-revalidate');
  // CSP lists are comma-separated intersecting policies. Keep the app's resource
  // restrictions; only the explicit public embed route may replace framing.
  const upstreamPolicy=headers.get('Content-Security-Policy');
