@@ -112,8 +112,9 @@ test('only valid public embeds replace framing across all upstream CSP policies'
 test('generated pages use the canonical English root and retain localized non-root SEO',async()=>{
  const sitemap=await readFile('dist/sitemap-0.xml','utf8');
  const locations=[...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match=>match[1]);
+ for(const location of locations) assert.equal(new URL(location).href,location);
  assert.equal(locations.filter(url=>url==='https://querydock.run/').length,1);
- assert.ok(!locations.includes('https://querydock.run/en/'));
+ assert.ok(!locations.some(url=>url==='https://querydock.run/en/'));
  for(const locale of ['en','ru']) for(const suffix of ['','graphql/','privacy/','terms/','sql/postgres/','sql/sqlite/','sql/duckdb/']) {
   const html=await readFile(`dist/${locale}/${suffix}index.html`,'utf8');
   const english=suffix?`https://querydock.run/en/${suffix}`:'https://querydock.run/';
@@ -125,7 +126,7 @@ test('generated pages use the canonical English root and retain localized non-ro
   assert.ok(html.includes(`hreflang="en" href="${english}"`));
   assert.ok(html.includes(`hreflang="ru" href="${russian}"`));
   assert.ok(html.includes(`hreflang="x-default" href="${english}"`));
-  assert.ok(locations.includes(canonical),canonical);
+  assert.ok(locations.some(url=>url===canonical),canonical);
   assert.ok(html.includes(`href="${locale==='en'?'/':'/ru/'}"`));
   assert.ok(html.includes(`class="language" href="${new URL(locale==='en'?russian:english).pathname}"`));
   assert.doesNotMatch(html,/href="\/en\/(?:#|")/);
@@ -143,7 +144,7 @@ test('generated pages use the canonical English root and retain localized non-ro
   if(suffix==='graphql/')assert.ok(html.includes(locale==='en'?'Coming soon':'Скоро'));
   if(suffix==='graphql/'||suffix.startsWith('sql/'))assert.ok(html.includes(`href="${locale==='en'?'/':'/ru/'}#engines"`));
  }
- for(const locale of ['en','ru']) assert.ok(locations.includes(`https://querydock.run/${locale}/examples/`));
+ for(const locale of ['en','ru']) assert.ok(locations.some(url=>url===`https://querydock.run/${locale}/examples/`));
  const missing=await readFile('dist/404.html','utf8');
  assert.ok(missing.includes('noindex,follow'));
  assert.ok(missing.includes('href="/">English home'));
