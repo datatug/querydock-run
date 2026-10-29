@@ -1,0 +1,5 @@
+.site-feedback { padding: 20px 24px; text-align: center; }
+.site-feedback button { min-height: 44px; max-width: 100%; padding: 10px 18px; border: 1px solid #084dbd; border-radius: 6px; background: #0d63e9; color: #fff; font: 600 14px/1.4 system-ui, sans-serif; cursor: pointer; }
+.site-feedback button[hidden] { display: none; }
+.site-feedback button:hover { background: #084dbd; }
+.site-feedback button:focus-visible { outline: 3px solid #084dbd; outline-offset: 3px; }
