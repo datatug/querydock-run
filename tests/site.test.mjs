@@ -50,7 +50,7 @@ test('only valid public embeds replace framing across all upstream CSP policies'
   assert.equal(invalid.headers.get('x-frame-options'),'DENY');
  }
 });
-test('all localized generated HTML contains reciprocal SEO and truthful copy',async()=>{const sitemap=await readFile('dist/sitemap-0.xml','utf8');for(const locale of ['en','ru'])for(const suffix of ['','graphql/','privacy/','terms/','sql/postgres/','sql/sqlite/','sql/duckdb/']){const html=await readFile(`dist/${locale}/${suffix}index.html`,'utf8');assert.match(html,new RegExp(`lang="${locale}"`));assert.ok(html.includes(`https://querydock.run/${locale}/${suffix}`));for(const alternate of ['en','ru'])assert.ok(html.includes(`https://querydock.run/${alternate}/${suffix}`));assert.ok(sitemap.includes(`https://querydock.run/${locale}/${suffix}`));assert.doesNotMatch(html,/googletagmanager|fonts.googleapis/);assert.equal((html.match(/<script\b/g)||[]).length,1);assert.match(html,/<script[^>]*src="\/theme\.js"/);assert.match(html,/id="theme-mode"/);assert.doesNotMatch(html,/href="\/sql\//);if(suffix==='graphql/')assert.ok(html.includes(locale==='en'?'Coming soon':'Скоро'));}assert.ok((await readFile('dist/404.html','utf8')).includes('noindex,follow'));});
+test('all localized generated HTML contains reciprocal SEO and truthful copy',async()=>{const sitemap=await readFile('dist/sitemap-0.xml','utf8');for(const locale of ['en','ru'])for(const suffix of ['','graphql/','privacy/','terms/','sql/postgres/','sql/sqlite/','sql/duckdb/']){const html=await readFile(`dist/${locale}/${suffix}index.html`,'utf8');assert.match(html,new RegExp(`lang="${locale}"`));assert.ok(html.includes(`https://querydock.run/${locale}/${suffix}`));for(const alternate of ['en','ru'])assert.ok(html.includes(`https://querydock.run/${alternate}/${suffix}`));assert.ok(sitemap.includes(`https://querydock.run/${locale}/${suffix}`));assert.doesNotMatch(html,/googletagmanager|fonts.googleapis/);assert.equal((html.match(/<script\b/g)||[]).length,3);assert.equal((html.match(/https:\/\/improveit.now\/widget.js/g)||[]).length,1);assert.match(html,/data-space="ao58m" data-app="68be5a2b72bb6213ed8378a2aa3814c0"/);assert.match(html,new RegExp(`data-lang="${locale}"`));assert.match(html,/<script[^>]*src="\/feedback\.js"/);assert.match(html,/data-launcher="hidden"/);assert.doesNotMatch(html,/data-screen|data-url|data-path/);assert.match(html,/<script[^>]*src="\/theme\.js"/);assert.match(html,/id="theme-mode"/);assert.doesNotMatch(html,/href="\/sql\//);if(suffix==='graphql/')assert.ok(html.includes(locale==='en'?'Coming soon':'Скоро'));}assert.ok((await readFile('dist/404.html','utf8')).includes('noindex,follow'));});
 
 test('only exact localized home and examples routes reach the app binding',async()=>{
  const seen=[]; const QUERYDOCK_APP={fetch:async req=>{seen.push(new URL(req.url).pathname);return new Response('tool',{headers:{'Referrer-Policy':'no-referrer'}});}};
@@ -62,3 +62,20 @@ test('only exact localized home and examples routes reach the app binding',async
 test('engine guides retain selected locale and engine in clean tool entry URLs',async()=>{for(const locale of ['en','ru'])for(const engine of ['postgres','sqlite','duckdb']){const html=await readFile(`dist/${locale}/sql/${engine}/index.html`,'utf8');assert.ok(html.includes(`href="/${locale}/sql/${engine}/run/"`));assert.doesNotMatch(html,/\?lang=/);}});
 
 test('localized app aliases canonicalize before binding without dropping URL fields',async()=>{for(const path of ['/en','/ru/examples','/en/sql/sqlite/run']){let called=false;const r=await request(path+'?keep=value',{QUERYDOCK_APP:{fetch:async()=>{called=true;return new Response('unexpected');}}});assert.equal(r.status,308);assert.equal(new URL(r.headers.get('location')).pathname,path+'/');assert.equal(new URL(r.headers.get('location')).search,'?keep=value');assert.equal(called,false);}});
+test('account-free hash embed path is frameable exactly like a pinned embed and nothing else is',async()=>{
+ const upstream="default-src 'self'; frame-ancestors 'none'; connect-src 'self'";
+ const binding={fetch:async()=>new Response('app',{headers:{'Content-Security-Policy':upstream,'X-Frame-Options':'DENY'}})};
+ const pinned=await request('/sql/abcdefghijklmnop/3/embed',{QUERYDOCK_APP:binding});
+ for(const path of ['/sql/embed','/sql/embed/']) {
+  const r=await request(path,{QUERYDOCK_APP:binding});
+  assert.equal(r.headers.get('x-frame-options'),null,path);
+  assert.equal(r.headers.get('content-security-policy'),pinned.headers.get('content-security-policy'),path);
+  assert.equal(r.headers.get('content-security-policy'),"default-src 'self'; connect-src 'self', frame-ancestors *; base-uri 'self'; object-src 'none'");
+  assert.equal(r.headers.get('referrer-policy'),'no-referrer');
+ }
+ for(const path of ['/sql/embed/x','/sql/embed//','/sql/embeds','/sql/embed.html','/sql/','/sql','/sql/postgres/embed','/en/embed']) {
+  const r=await request(path,{QUERYDOCK_APP:binding});
+  assert.equal(r.headers.get('x-frame-options'),'DENY',path);
+  assert.match(r.headers.get('content-security-policy'),/frame-ancestors 'none'; base-uri/,path);
+ }
+});
