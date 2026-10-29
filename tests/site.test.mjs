@@ -62,3 +62,20 @@ test('only exact localized home and examples routes reach the app binding',async
 test('engine guides retain selected locale and engine in clean tool entry URLs',async()=>{for(const locale of ['en','ru'])for(const engine of ['postgres','sqlite','duckdb']){const html=await readFile(`dist/${locale}/sql/${engine}/index.html`,'utf8');assert.ok(html.includes(`href="/${locale}/sql/${engine}/run/"`));assert.doesNotMatch(html,/\?lang=/);}});
 
 test('localized app aliases canonicalize before binding without dropping URL fields',async()=>{for(const path of ['/en','/ru/examples','/en/sql/sqlite/run']){let called=false;const r=await request(path+'?keep=value',{QUERYDOCK_APP:{fetch:async()=>{called=true;return new Response('unexpected');}}});assert.equal(r.status,308);assert.equal(new URL(r.headers.get('location')).pathname,path+'/');assert.equal(new URL(r.headers.get('location')).search,'?keep=value');assert.equal(called,false);}});
+test('account-free hash embed path is frameable exactly like a pinned embed and nothing else is',async()=>{
+ const upstream="default-src 'self'; frame-ancestors 'none'; connect-src 'self'";
+ const binding={fetch:async()=>new Response('app',{headers:{'Content-Security-Policy':upstream,'X-Frame-Options':'DENY'}})};
+ const pinned=await request('/sql/abcdefghijklmnop/3/embed',{QUERYDOCK_APP:binding});
+ for(const path of ['/sql/embed','/sql/embed/']) {
+  const r=await request(path,{QUERYDOCK_APP:binding});
+  assert.equal(r.headers.get('x-frame-options'),null,path);
+  assert.equal(r.headers.get('content-security-policy'),pinned.headers.get('content-security-policy'),path);
+  assert.equal(r.headers.get('content-security-policy'),"default-src 'self'; connect-src 'self', frame-ancestors *; base-uri 'self'; object-src 'none'");
+  assert.equal(r.headers.get('referrer-policy'),'no-referrer');
+ }
+ for(const path of ['/sql/embed/x','/sql/embed//','/sql/embeds','/sql/embed.html','/sql/','/sql','/sql/postgres/embed','/en/embed']) {
+  const r=await request(path,{QUERYDOCK_APP:binding});
+  assert.equal(r.headers.get('x-frame-options'),'DENY',path);
+  assert.match(r.headers.get('content-security-policy'),/frame-ancestors 'none'; base-uri/,path);
+ }
+});

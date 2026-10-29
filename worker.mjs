@@ -1,6 +1,9 @@
 const unavailable = () => Response.json({error:'not_available',message:'QueryDock execution and sharing are not available yet.'},{status:503,headers:{'Cache-Control':'no-store','Retry-After':'3600','X-Content-Type-Options':'nosniff'}});
 const isPath = (path, prefix) => path === prefix || path.startsWith(`${prefix}/`);
 function isEmbed(path) {
+ // The account-free embed carries its example only in the URL fragment, which
+ // never reaches the server; only this exact path is frameable.
+ if(path==='/sql/embed'||path==='/sql/embed/') return true;
  const route=/^\/sql\/([A-Za-z0-9_-]{16,128})\/([1-9][0-9]*)\/embed\/?$/.exec(path);
  return !!route && Number.isSafeInteger(Number(route[2]));
 }
