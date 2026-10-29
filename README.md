@@ -26,7 +26,7 @@ No external fonts, tracking scripts, signup form or query submission form are in
 | `/api/querydock`, `/api/querydock/*` | JSON 503 with no caching | Optional fixed HTTPS `API_ORIGIN` deployment configuration |
 | Unknown paths | Static 404 page with 404 status | Stable |
 
-The Worker runs before assets. There is no SPA fallback for landing URLs. The API origin is never selected from a browser-controlled target parameter. Future public `/sql/{id}/{revision}/embed` routes may be framed; landing pages deny framing. No application service or API origin is configured in this first deployment.
+The Worker runs before assets. There is no SPA fallback for landing URLs. The API origin is never selected from a browser-controlled target parameter. Public `/sql/{id}/{revision}/embed` routes and the account-free `/sql/embed` route (whose example lives only in the URL fragment) may be framed; every other path, including `/sql/embed/<anything>`, and landing pages deny framing. No application service or API origin is configured in this first deployment.
 
 ## Deployment ownership
 
