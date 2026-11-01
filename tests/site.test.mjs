@@ -181,3 +181,37 @@ test('account-free hash embed path is frameable exactly like a pinned embed and 
   assert.match(r.headers.get('content-security-policy'),/frame-ancestors 'none'; base-uri/,path);
  }
 });
+
+
+test('only exact root Angular offline controls reach the app and preserve its resource policy',async(t)=>{
+ t.mock.method(globalThis,'fetch',async()=>assert.fail('Offline controls must use the service binding'));
+ const policy="script-src 'self'; worker-src 'none'; object-src 'none'; base-uri 'none'";
+ for(const path of ['/ngsw-worker.js','/safety-worker.js','/ngsw.json']) for(const method of ['GET','HEAD']) {
+  let seen;
+  const response=await request(path+'?ngsw-cache-bust=0.125',{
+   QUERYDOCK_APP:{fetch:async req=>{seen=req;return new Response(method==='HEAD'?null:'official bytes',{headers:{'Content-Security-Policy':policy,'Cache-Control':'no-cache','Content-Type':path.endsWith('.json')?'application/json; charset=utf-8':'text/javascript; charset=utf-8'}});}},
+   ASSETS:{fetch:async()=>assert.fail('Bound controls must not fall through to Astro')},
+  },method);
+  assert.equal(seen.url,'https://querydock.run'+path+'?ngsw-cache-bust=0.125');
+  assert.equal(seen.method,method);
+  assert.equal(response.status,200);
+  assert.equal(response.headers.get('cache-control'),'no-cache');
+  assert.equal(response.headers.get('content-type'),path.endsWith('.json')?'application/json; charset=utf-8':'text/javascript; charset=utf-8');
+  assert.equal(response.headers.get('content-security-policy'),policy+", frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
+  assert.equal(response.headers.get('x-frame-options'),'DENY');
+  assert.equal(await response.text(),method==='HEAD'?'':'official bytes');
+ }
+ for(const path of ['/ngsw-worker.js','/safety-worker.js','/ngsw.json']) {
+  const absent=await request(path,{ASSETS:{fetch:async()=>assert.fail('Absent controls cannot become static HTML')}});
+  assert.equal(absent.status,503);assert.equal(absent.headers.get('cache-control'),'no-store');assert.equal(absent.headers.get('location'),null);
+  for(const method of ['POST','PUT','DELETE']) {
+   const rejected=await request(path,{QUERYDOCK_APP:{fetch:async()=>assert.fail('Control mutations must not reach binding')}},method);
+   assert.equal(rejected.status,405);assert.equal(rejected.headers.get('allow'),'GET, HEAD');
+  }
+ }
+ for(const path of ['/ngsw-worker.js/extra','/ngsw.json/','/ngsw-worker.js.map','/NGSW.json','/other-worker.js']) {
+  let seen;
+  const response=await request(path,{QUERYDOCK_APP:{fetch:async()=>assert.fail('Control prefix must not broaden app ownership')},ASSETS:{fetch:async req=>{seen=new URL(req.url).pathname;return new Response('static missing',{status:404});}}});
+  assert.equal(response.status,404);assert.equal(seen,path);
+ }
+});
