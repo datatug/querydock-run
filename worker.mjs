@@ -46,6 +46,13 @@ export default {
    try { return secure(await fetch(new Request(upstream,{method:request.method,headers,body:['GET','HEAD'].includes(request.method)?undefined:request.body,redirect:'manual'})),{api:true}); }
    catch { return secure(unavailable(),{api:true}); }
   }
+  // Angular's standard worker has root scope; only these exact controls are
+  // owned by the app. Keep canonical documents, API and all other routes intact.
+  if(['/ngsw-worker.js','/safety-worker.js','/ngsw.json'].includes(path)) {
+   if(!['GET','HEAD'].includes(request.method)) return secure(new Response(null,{status:405,headers:{Allow:'GET, HEAD','Cache-Control':'no-store'}}));
+   if(!env.QUERYDOCK_APP) return secure(new Response('Offline application controls are not available yet.',{status:503,headers:{'Cache-Control':'no-store'}}));
+   return secure(await env.QUERYDOCK_APP.fetch(request));
+  }
   if(path==='/'||isPath(path,'/sql')||isPath(path,'/_querydock')||/^\/(en|ru)(?:(?:\/examples)|(?:\/sql\/(postgres|sqlite|duckdb)\/run))?\/?$/.test(path)) {
    if(env.QUERYDOCK_APP) return secure(await env.QUERYDOCK_APP.fetch(request),{embed:isEmbed(path)});
    if(path==='/') {
