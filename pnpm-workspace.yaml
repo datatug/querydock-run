@@ -4,5 +4,8 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - miniflare@5.20261023.1-beta
   - wrangler@4.154.0
+  - '@astrojs/internal-helpers@0.13.1'
+  - '@astrojs/markdown-satteri@0.4.7'
+  - astro@7.4.7
 overrides:
   undici@7.29.1: 8.12.4
