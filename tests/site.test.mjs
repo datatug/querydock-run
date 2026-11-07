@@ -228,14 +228,25 @@ test('account-free hash embed path is frameable exactly like a pinned embed and 
 });
 
 
+function linksPublicRepo(text){
+ return [...text.matchAll(/https?:\/\/[^\s)]+/g)].some(match=>{
+  let url;
+  try { url=new URL(match[0].replace(/[.,;]+$/,'')); } catch { return false; }
+  const parts=url.pathname.split('/').filter(Boolean);
+  return url.protocol==='https:' && url.hostname==='github.com' && parts[0]==='datatug' && parts[1]==='querydock-run';
+ });
+}
 test('llms files are text/plain and describe QueryDock without invented counts',async()=>{
+ assert.equal(linksPublicRepo('The licence is at https://github.com/datatug/querydock-run.'),true);
+ assert.equal(linksPublicRepo('licence https://github.com.evil/datatug/querydock-run'),false);
+ assert.equal(linksPublicRepo('licence https://evil.example/https://github.com/datatug/querydock-run'),false);
  const short=await readFile('dist/llms.txt','utf8');
  const full=await readFile('dist/llms-full.txt','utf8');
  assert.ok(full.length>short.length);
  for(const [name,body] of [['llms.txt',short],['llms-full.txt',full]]){
   assert.match(body,/^# QueryDock\n\n> QueryDock is a free in-browser SQL playground/);
-  for(const phrase of ['PGlite','SQLite','DuckDB','No sign-up is required to run queries','Sign in to save','embed','/examples/','coming soon','https://datatug.app/','https://github.com/datatug/querydock-run','https://querydock.run/en/sql/postgres/','https://querydock.run/ru/sql/postgres/','https://querydock.run/en/sql/sqlite/','https://querydock.run/ru/sql/sqlite/','https://querydock.run/en/sql/duckdb/','https://querydock.run/ru/sql/duckdb/','https://querydock.run/en/graphql/','https://querydock.run/ru/graphql/','https://querydock.run/en/examples/','https://querydock.run/ru/examples/']) assert.ok(body.includes(phrase),`${name} missing ${phrase}`);
-  if(/open[- ]source|licen[cs]e/i.test(body)) assert.ok(body.includes('https://github.com/datatug/querydock-run'),name);
+  for(const phrase of ['PGlite','SQLite','DuckDB','No sign-up is required to run queries','Sign in to save','embed','/examples/','coming soon','https://datatug.app/','https://querydock.run/en/sql/postgres/','https://querydock.run/ru/sql/postgres/','https://querydock.run/en/sql/sqlite/','https://querydock.run/ru/sql/sqlite/','https://querydock.run/en/sql/duckdb/','https://querydock.run/ru/sql/duckdb/','https://querydock.run/en/graphql/','https://querydock.run/ru/graphql/','https://querydock.run/en/examples/','https://querydock.run/ru/examples/']) assert.ok(body.includes(phrase),`${name} missing ${phrase}`);
+  assert.equal(linksPublicRepo(body),true,`${name} public repo`);
   assert.doesNotMatch(body,/\b\d[\d,]*\s+(users|customers|developers|teams|stars)\b/i,name);
   let appCalled=false;
   const response=await request('/'+name,{
