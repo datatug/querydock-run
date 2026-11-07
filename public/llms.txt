@@ -1,0 +1,49 @@
+# QueryDock
+
+> QueryDock is a free in-browser SQL playground for PostgreSQL (via PGlite), SQLite and DuckDB, in English and Russian, and part of the DataTug family.
+
+QueryDock — бесплатная SQL-песочница в браузере для PostgreSQL (PGlite), SQLite и DuckDB, часть семейства DataTug.
+
+No sign-up is required to run queries. Schema, seed data and drafts stay in this browser. Sign in to save a workspace online. Examples and embeds are available. GraphQL is coming soon and is not executable yet.
+
+## Engines
+
+- PostgreSQL, via PGlite, in the browser: https://querydock.run/en/sql/postgres/ and https://querydock.run/ru/sql/postgres/
+- SQLite in the browser: https://querydock.run/en/sql/sqlite/ and https://querydock.run/ru/sql/sqlite/
+- DuckDB in the browser: https://querydock.run/en/sql/duckdb/ and https://querydock.run/ru/sql/duckdb/
+
+## Features
+
+- Run SQL with no sign-up. The playground needs JavaScript. Queries do not run until you execute them.
+- Build tables and seed data in the browser. Local drafts stay on the device. Download JSON to keep a separate copy.
+- Sign in to save online. Saving asks for an explicit confirmation and uploads the complete workspace. Saved revisions are unlisted: anyone with the link can read or run them without signing in.
+- Examples, with fictional data, can be run and cloned with no sign-up: https://querydock.run/en/examples/ and https://querydock.run/ru/examples/
+- Embeds: an account-free embed at https://querydock.run/sql/embed (the example is carried only in the URL fragment) and a public embed of a saved revision at https://querydock.run/sql/{id}/{revision}/embed
+- Open a saved or local workspace in DataTug, a separate product: https://datatug.app/
+- English home and playground: https://querydock.run/
+- Russian home and playground: https://querydock.run/ru/
+- Playgrounds by engine, English: https://querydock.run/en/sql/postgres/run/ , https://querydock.run/en/sql/sqlite/run/ , https://querydock.run/en/sql/duckdb/run/
+- Playgrounds by engine, Russian: https://querydock.run/ru/sql/postgres/run/ , https://querydock.run/ru/sql/sqlite/run/ , https://querydock.run/ru/sql/duckdb/run/
+
+## Guides
+
+- PostgreSQL guide, English: https://querydock.run/en/sql/postgres/
+- PostgreSQL guide, Russian: https://querydock.run/ru/sql/postgres/
+- SQLite guide, English: https://querydock.run/en/sql/sqlite/
+- SQLite guide, Russian: https://querydock.run/ru/sql/sqlite/
+- DuckDB guide, English: https://querydock.run/en/sql/duckdb/
+- DuckDB guide, Russian: https://querydock.run/ru/sql/duckdb/
+- GraphQL, coming soon, English: https://querydock.run/en/graphql/
+- GraphQL, coming soon, Russian: https://querydock.run/ru/graphql/
+- Privacy, English: https://querydock.run/en/privacy/
+- Privacy, Russian: https://querydock.run/ru/privacy/
+- Terms, English: https://querydock.run/en/terms/
+- Terms, Russian: https://querydock.run/ru/terms/
+
+## Links
+
+- QueryDock: https://querydock.run/
+- QueryDock in Russian: https://querydock.run/ru/
+- DataTug: https://datatug.app/
+- Landing guides and Cloudflare routing: https://github.com/datatug/querydock-run
+- Extended notes: https://querydock.run/llms-full.txt

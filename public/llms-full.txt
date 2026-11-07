@@ -1,0 +1,74 @@
+# QueryDock
+
+> QueryDock is a free in-browser SQL playground for PostgreSQL (via PGlite), SQLite and DuckDB, in English and Russian, and part of the DataTug family.
+
+QueryDock — бесплатная SQL-песочница в браузере для PostgreSQL (PGlite), SQLite и DuckDB, часть семейства DataTug.
+
+No sign-up is required to run queries. Schema, seed data and drafts stay in this browser. Sign in to save a workspace online. Examples and embeds are available. GraphQL is coming soon and is not executable yet.
+
+This file restates public pages on https://querydock.run/. It does not add product behaviour beyond those pages. Guide pages explain an engine. They do not execute SQL. Open the playground to run a query.
+
+## Engines
+
+PostgreSQL on QueryDock uses PGlite for small, reproducible PostgreSQL-compatible examples in the browser. The engine guide describes joins, constraints, common table expressions and window functions. English: https://querydock.run/en/sql/postgres/ — Russian: https://querydock.run/ru/sql/postgres/ — Playground: https://querydock.run/en/sql/postgres/run/ and https://querydock.run/ru/sql/postgres/run/
+
+SQLite on QueryDock runs in the browser. It is the compact starting point for tables, WHERE filters, aggregates and joins. English: https://querydock.run/en/sql/sqlite/ — Russian: https://querydock.run/ru/sql/sqlite/ — Playground: https://querydock.run/en/sql/sqlite/run/ and https://querydock.run/ru/sql/sqlite/run/
+
+DuckDB on QueryDock runs in the browser for analytical SQL: grouping, aggregates and transformations across many rows. English: https://querydock.run/en/sql/duckdb/ — Russian: https://querydock.run/ru/sql/duckdb/ — Playground: https://querydock.run/en/sql/duckdb/run/ and https://querydock.run/ru/sql/duckdb/run/
+
+The home playground also lets you switch among PostgreSQL, SQLite and DuckDB. English home: https://querydock.run/ — Russian home: https://querydock.run/ru/
+
+Illustrative SQL on the guides is not executed there. PostgreSQL sample: count arrivals by harbour. SQLite sample: list boats with capacity of at least 4. DuckDB sample: sum cargo by month. Open the matching playground to run SQL.
+
+## Run, save, examples, embeds
+
+Run SQL with no sign-up. Editing and running require JavaScript, and nothing runs until you execute it. You can build tables and seed data in the browser. Local drafts are stored in IndexedDB on that device. Clearing browser data or using a private session may remove them. Download JSON to keep a separate copy. The colour theme is saved in the browser and is not synced to an account.
+
+Sign in to save online. Saving requires a signed-in account and an explicit confirmation. It uploads the complete workspace: every query, schema, seed and parameter value. Saved revisions are unlisted, not private: anyone with the link can read or run them without signing in. Do not publish secrets, credentials or personal data. Sign-in is Firebase Authentication, operated by Google. The storage API runs on Google Cloud Run. Published content, owner identifiers, revision metadata, quota counters and retry records are stored in Firestore. There is no automatic expiry guarantee for published workspaces.
+
+Examples use fictional data. You can run and clone them in the browser with no sign-up, and sign in only to save online. English examples: https://querydock.run/en/examples/ — Russian examples: https://querydock.run/ru/examples/
+
+Embeds: an account-free embed is https://querydock.run/sql/embed (and https://querydock.run/sql/embed/). The example is carried only in the URL fragment, which the server does not receive. A saved revision can be embedded at https://querydock.run/sql/{id}/{revision}/embed. Other paths are not frameable embeds.
+
+Open in DataTug sends the workspace to a separate product at https://datatug.app/. An unchanged saved workspace uses its public id, revision and digest. Local or edited workspaces transfer the complete content in the URL fragment or through an explicit JSON download and import.
+
+## GraphQL
+
+GraphQL is coming soon. There is no GraphQL editor and GraphQL cannot be executed. English: https://querydock.run/en/graphql/ — Russian: https://querydock.run/ru/graphql/ — While that is unfinished, run SQL in the playground.
+
+## Guides in both languages
+
+- PostgreSQL, English: https://querydock.run/en/sql/postgres/
+- PostgreSQL, Russian: https://querydock.run/ru/sql/postgres/
+- SQLite, English: https://querydock.run/en/sql/sqlite/
+- SQLite, Russian: https://querydock.run/ru/sql/sqlite/
+- DuckDB, English: https://querydock.run/en/sql/duckdb/
+- DuckDB, Russian: https://querydock.run/ru/sql/duckdb/
+- Privacy, English: https://querydock.run/en/privacy/
+- Privacy, Russian: https://querydock.run/ru/privacy/
+- Terms, English: https://querydock.run/en/terms/
+- Terms, Russian: https://querydock.run/ru/terms/
+
+Russian interface copy describes the same product: a free SQL sandbox, queries without registration, and QueryDock as part of the DataTug family.
+
+## Privacy and terms, as published
+
+SQL runs in disposable browser engines. Those engines are not connected to your production databases. Schema, seed data, queries and parameter values remain local unless you explicitly publish a workspace or transfer it to DataTug.
+
+Delete online first revokes public access, then removes stored snapshot payloads in bounded cleanup batches. A completed deletion confirms payload cleanup. Interrupted cleanup may retain payloads and quota reservations until the owner retries. Deletion cannot remove copies others have downloaded or cloned.
+
+Optional website analytics exists only if you accept it, and only on the localized homepage or examples page. It uses Google Analytics with fixed page labels. QueryDock does not send SQL, schema, seed data, parameters, draft names, account identifiers, URL query strings, fragments or referrers to that analytics. SQL, public snippet, embed and transfer routes are not measured. Analytics can be rejected or withdrawn. Enhanced measurement and advertising signals are disabled.
+
+Cloudflare delivers pages and assets. DuckDB may download its pinned engine WASM file from jsDelivr when needed. jsDelivr receives the IP address and asset-request metadata, not SQL, schema, seed or parameters. DuckDB initialization needs a network connection. Other engine assets come from QueryDock.
+
+Questions can be raised through https://github.com/datatug/querydock-run/issues. Do not include confidential content in public issues.
+
+Terms: you are responsible for what you publish. Share only content you have permission to disclose. Unlisted links are accessible without login. Examples and engine results are for experimentation, without a guarantee of fitness, accuracy, availability or durability. Use limits and account checks protect shared storage.
+
+## Links
+
+- QueryDock: https://querydock.run/
+- QueryDock in Russian: https://querydock.run/ru/
+- DataTug: https://datatug.app/
+- Landing guides and Cloudflare routing: https://github.com/datatug/querydock-run
+- Short notes: https://querydock.run/llms.txt
