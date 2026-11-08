@@ -35,6 +35,15 @@ export default {
   if(path==='/en'||path==='/en/') { url.pathname='/'; return secure(Response.redirect(url,308)); }
   if(path==='/graphql'||path==='/graphql/') return secure(Response.redirect(new URL('/en/graphql/',url),302));
   if(/^\/(en|ru)(?:(?:\/examples)|(?:\/sql\/(postgres|sqlite|duckdb)\/run))?$/.test(path)) { url.pathname += '/'; return secure(Response.redirect(url,308)); }
+  // Legacy sitemap alias. Not an app route: /sql, examples and /run stay with the playground.
+  if(path==='/sitemap.xml') { const target=new URL(url); target.pathname='/sitemap-index.xml'; return secure(Response.redirect(target,301)); }
+  if((path==='/llms.txt'||path==='/llms-full.txt') && ['GET','HEAD'].includes(request.method)) {
+   const asset=await env.ASSETS.fetch(request);
+   if(asset.status!==200) return secure(asset);
+   const headers=new Headers(asset.headers);
+   headers.set('Content-Type','text/plain; charset=utf-8');
+   return secure(new Response(asset.body,{status:asset.status,statusText:asset.statusText,headers}));
+  }
   if(isPath(path,'/api/querydock')) {
    if(!env.API_ORIGIN) return secure(unavailable(),{api:true});
    // Deployment-only fixed origin; no request parameter can select an upstream.

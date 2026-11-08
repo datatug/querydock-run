@@ -115,6 +115,15 @@ test('generated pages use the canonical English root and retain localized non-ro
  for(const location of locations) assert.equal(new URL(location).href,location);
  assert.equal(locations.filter(url=>url==='https://querydock.run/').length,1);
  assert.ok(!locations.some(url=>url==='https://querydock.run/en/'));
+ const descriptions=new Set();
+ const engineTitles={
+  'en/sql/postgres/':'PostgreSQL online playground — run SQL in your browser | QueryDock',
+  'en/sql/sqlite/':'SQLite online playground — learn SQL in your browser | QueryDock',
+  'en/sql/duckdb/':'DuckDB online playground — run analytical SQL in your browser | QueryDock',
+  'ru/sql/postgres/':'PostgreSQL онлайн-песочница — запускайте SQL в браузере | QueryDock',
+  'ru/sql/sqlite/':'SQLite онлайн-песочница — изучайте SQL в браузере | QueryDock',
+  'ru/sql/duckdb/':'DuckDB онлайн-песочница — аналитический SQL в браузере | QueryDock',
+ };
  for(const locale of ['en','ru']) for(const suffix of ['','graphql/','privacy/','terms/','sql/postgres/','sql/sqlite/','sql/duckdb/']) {
   const html=await readFile(`dist/${locale}/${suffix}index.html`,'utf8');
   const english=suffix?`https://querydock.run/en/${suffix}`:'https://querydock.run/';
@@ -131,7 +140,34 @@ test('generated pages use the canonical English root and retain localized non-ro
   assert.ok(html.includes(`class="language" href="${new URL(locale==='en'?russian:english).pathname}"`));
   assert.doesNotMatch(html,/href="\/en\/(?:#|")/);
   assert.doesNotMatch(html,/googletagmanager|fonts.googleapis/);
-  assert.equal((html.match(/<script\b/g)||[]).length,3);
+  assert.equal((html.match(/<script\b/g)||[]).length,4);
+  assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));
+  assert.ok(html.includes('property="og:image" content="https://querydock.run/og-card.png"'));
+  assert.ok(html.includes('property="og:image:width" content="1200"'));
+  assert.ok(html.includes('property="og:image:height" content="630"'));
+  assert.doesNotMatch(html,/og-card\.svg/);
+  const ld=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  assert.ok(ld,`${locale}/${suffix} json-ld`);
+  const graph=JSON.parse(ld[1]);
+  const nodes=graph['@graph'];
+  assert.ok(nodes.some(node=>node['@type']==='WebSite'&&Array.isArray(node.inLanguage)&&node.inLanguage.includes(locale)));
+  assert.equal(nodes.find(node=>node['@type']==='Organization').name,'DataTug');
+  assert.equal(nodes.find(node=>node['@type']==='Organization').url,'https://datatug.app/');
+  const page=nodes.find(node=>node['@type']==='TechArticle'||node['@type']==='WebPage');
+  assert.equal(page['@type'],suffix.startsWith('sql/')?'TechArticle':'WebPage');
+  assert.equal(page.inLanguage,locale);
+  assert.equal(page.url,canonical);
+  assert.doesNotMatch(JSON.stringify(graph),/aggregateRating|"price"|offers|reviewCount|ratingValue/);
+  if(suffix.startsWith('sql/')){
+   const meta=html.match(/<meta name="description" content="([^"]*)"/);
+   assert.ok(meta,`${locale}/${suffix} description`);
+   const desc=meta[1];
+   assert.ok(desc.length>=120&&desc.length<=160,`${locale}/${suffix} description length ${desc.length}`);
+   assert.equal(descriptions.has(desc),false,desc);
+   descriptions.add(desc);
+   assert.ok(html.includes(`<title>${engineTitles[`${locale}/${suffix}`]}</title>`));
+   assert.equal(page.headline,engineTitles[`${locale}/${suffix}`]);
+  }
   assert.equal((html.match(/https:\/\/improveit.now\/widget.js/g)||[]).length,1);
   assert.match(html,/data-space="ao58m" data-app="68be5a2b72bb6213ed8378a2aa3814c0"/);
   assert.match(html,new RegExp(`data-lang="${locale}"`));
@@ -150,8 +186,17 @@ test('generated pages use the canonical English root and retain localized non-ro
  assert.ok(missing.includes('href="/">English home'));
  assert.ok(missing.includes('href="/ru/">На главную'));
  const robots=await readFile('dist/robots.txt','utf8');
- assert.match(robots,/Allow: \/(?:\r?\n|$)/);
- assert.match(robots,/Sitemap: https:\/\/querydock\.run\/sitemap-index\.xml/);
+ assert.match(robots,/User-agent: \*\r?\nAllow: \/\r?\n/);
+ assert.doesNotMatch(robots,/Disallow:/);
+ for(const bot of ['GPTBot','ClaudeBot','PerplexityBot','Google-Extended']) assert.match(robots,new RegExp(`User-agent: ${bot}\\r?\\nAllow: /\\r?\\n`));
+ assert.match(robots,/Sitemap: https:\/\/querydock\.run\/sitemap-index\.xml\s*$/);
+ const png=await readFile('dist/og-card.png');
+ assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ assert.equal(png.readUInt32BE(16),1200);
+ assert.equal(png.readUInt32BE(20),630);
+ await assert.rejects(()=>readFile('dist/og-card.svg'));
+ assert.equal((missing.match(/<script\b/g)||[]).length,3);
+ assert.doesNotMatch(missing,/application\/ld\+json/);
 });
 
 test('only exact public home and localized tool routes reach the app binding',async()=>{
@@ -182,6 +227,57 @@ test('account-free hash embed path is frameable exactly like a pinned embed and 
  }
 });
 
+
+function linksPublicRepo(text){
+ return [...text.matchAll(/https?:\/\/[^\s)]+/g)].some(match=>{
+  let url;
+  try { url=new URL(match[0].replace(/[.,;]+$/,'')); } catch { return false; }
+  const parts=url.pathname.split('/').filter(Boolean);
+  return url.protocol==='https:' && url.hostname==='github.com' && parts[0]==='datatug' && parts[1]==='querydock-run';
+ });
+}
+test('llms files are text/plain and describe QueryDock without invented counts',async()=>{
+ assert.equal(linksPublicRepo('The licence is at https://github.com/datatug/querydock-run.'),true);
+ assert.equal(linksPublicRepo('licence https://github.com.evil/datatug/querydock-run'),false);
+ assert.equal(linksPublicRepo('licence https://evil.example/https://github.com/datatug/querydock-run'),false);
+ const short=await readFile('dist/llms.txt','utf8');
+ const full=await readFile('dist/llms-full.txt','utf8');
+ assert.ok(full.length>short.length);
+ for(const [name,body] of [['llms.txt',short],['llms-full.txt',full]]){
+  assert.match(body,/^# QueryDock\n\n> QueryDock is a free in-browser SQL playground/);
+  for(const phrase of ['PGlite','SQLite','DuckDB','No sign-up is required to run queries','Sign in to save','embed','/examples/','coming soon','https://datatug.app/','https://querydock.run/en/sql/postgres/','https://querydock.run/ru/sql/postgres/','https://querydock.run/en/sql/sqlite/','https://querydock.run/ru/sql/sqlite/','https://querydock.run/en/sql/duckdb/','https://querydock.run/ru/sql/duckdb/','https://querydock.run/en/graphql/','https://querydock.run/ru/graphql/','https://querydock.run/en/examples/','https://querydock.run/ru/examples/']) assert.ok(body.includes(phrase),`${name} missing ${phrase}`);
+  assert.equal(linksPublicRepo(body),true,`${name} public repo`);
+  assert.doesNotMatch(body,/\b\d[\d,]*\s+(users|customers|developers|teams|stars)\b/i,name);
+  let appCalled=false;
+  const response=await request('/'+name,{
+   QUERYDOCK_APP:{fetch:async()=>{appCalled=true;return new Response('app');}},
+   ASSETS:{fetch:async()=>new Response(body,{status:200,headers:{'Content-Type':'application/octet-stream'}})},
+  });
+  assert.equal(appCalled,false);
+  assert.equal(response.status,200);
+  assert.equal(response.headers.get('content-type'),'text/plain; charset=utf-8');
+  assert.equal(response.headers.get('x-content-type-options'),'nosniff');
+  assert.equal(await response.text(),body);
+ }
+ assert.ok(full.includes('IndexedDB'));
+ assert.ok(full.includes('unlisted'));
+});
+
+test('sitemap.xml permanently redirects to the sitemap index and is not an app route',async()=>{
+ for(const method of ['GET','HEAD']){
+  let called=false;
+  const response=await request('/sitemap.xml?x=1',{
+   QUERYDOCK_APP:{fetch:async()=>{called=true;return new Response('app');}},
+   ASSETS:{fetch:async()=>{called=true;return new Response('asset');}},
+  },method);
+  assert.equal(called,false);
+  assert.equal(response.status,301);
+  assert.equal(response.headers.get('location'),'https://querydock.run/sitemap-index.xml?x=1');
+ }
+ const index=await request('/sitemap-index.xml');
+ assert.equal(index.status,200);
+ assert.equal(await index.text(),'asset');
+});
 
 test('only exact root Angular offline controls reach the app and preserve its resource policy',async(t)=>{
  t.mock.method(globalThis,'fetch',async()=>assert.fail('Offline controls must use the service binding'));
