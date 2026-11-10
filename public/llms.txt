@@ -47,3 +47,8 @@ No sign-up is required to run queries. Schema, seed data and drafts stay in this
 - DataTug: https://datatug.app/
 - Landing guides and Cloudflare routing: https://github.com/datatug/querydock-run
 - Extended notes: https://querydock.run/llms-full.txt
+
+## Technology
+
+- English: https://querydock.run/en/about/tech-stack/
+- Русский: https://querydock.run/ru/about/tech-stack/

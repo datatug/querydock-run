@@ -72,3 +72,10 @@ Terms: you are responsible for what you publish. Share only content you have per
 - DataTug: https://datatug.app/
 - Landing guides and Cloudflare routing: https://github.com/datatug/querydock-run
 - Short notes: https://querydock.run/llms.txt
+
+## Technology behind QueryDock
+
+The public Astro pages are served by a Cloudflare Worker; playground routes reach the separate app. PGlite, SQLite and DuckDB execute SQL in the browser. The Go API uses DALgo and runs on Cloud Run. GraphQL is not executable.
+
+- English: https://querydock.run/en/about/tech-stack/
+- Русский: https://querydock.run/ru/about/tech-stack/

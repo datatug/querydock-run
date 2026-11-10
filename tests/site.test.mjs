@@ -124,7 +124,7 @@ test('generated pages use the canonical English root and retain localized non-ro
   'ru/sql/sqlite/':'SQLite онлайн-песочница — изучайте SQL в браузере | QueryDock',
   'ru/sql/duckdb/':'DuckDB онлайн-песочница — аналитический SQL в браузере | QueryDock',
  };
- for(const locale of ['en','ru']) for(const suffix of ['','graphql/','privacy/','terms/','sql/postgres/','sql/sqlite/','sql/duckdb/']) {
+ for(const locale of ['en','ru']) for(const suffix of ['','graphql/','privacy/','terms/','about/tech-stack/','sql/postgres/','sql/sqlite/','sql/duckdb/']) {
   const html=await readFile(`dist/${locale}/${suffix}index.html`,'utf8');
   const english=suffix?`https://querydock.run/en/${suffix}`:'https://querydock.run/';
   const russian=`https://querydock.run/ru/${suffix}`;
@@ -153,10 +153,15 @@ test('generated pages use the canonical English root and retain localized non-ro
   assert.ok(nodes.some(node=>node['@type']==='WebSite'&&Array.isArray(node.inLanguage)&&node.inLanguage.includes(locale)));
   assert.equal(nodes.find(node=>node['@type']==='Organization').name,'DataTug');
   assert.equal(nodes.find(node=>node['@type']==='Organization').url,'https://datatug.app/');
-  const page=nodes.find(node=>node['@type']==='TechArticle'||node['@type']==='WebPage');
-  assert.equal(page['@type'],suffix.startsWith('sql/')?'TechArticle':'WebPage');
+  const page=nodes.find(node=>['TechArticle','WebPage','AboutPage'].includes(node['@type']));
+  assert.equal(page['@type'],suffix==='about/tech-stack/'?'AboutPage':suffix.startsWith('sql/')?'TechArticle':'WebPage');
   assert.equal(page.inLanguage,locale);
   assert.equal(page.url,canonical);
+  if(suffix==='about/tech-stack/'){
+   assert.ok(nodes.some(node=>node['@type']==='BreadcrumbList'));
+   assert.match(html,/<h1\b[^>]*>[^<]*QueryDock[^<]*<\/h1>/);
+   assert.ok(html.includes(`href="/${locale}/about/tech-stack/"`));
+  }
   assert.doesNotMatch(JSON.stringify(graph),/aggregateRating|"price"|offers|reviewCount|ratingValue/);
   if(suffix.startsWith('sql/')){
    const meta=html.match(/<meta name="description" content="([^"]*)"/);
