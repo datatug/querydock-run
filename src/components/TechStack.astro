@@ -1,0 +1,26 @@
+---
+import type { Locale } from '../content';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const ru = locale === 'ru';
+const home = ru ? '/ru/' : '/';
+---
+<article class="wrap tech-stack">
+  <nav class="back" aria-label={ru ? 'Навигационная цепочка' : 'Breadcrumb'}><a href={home}>{ru ? 'Главная' : 'Home'}</a> / <span aria-current="page">{ru ? 'Технологии' : 'Tech stack'}</span></nav>
+  <p class="eyebrow">QUERYDOCK / {ru ? 'ПОД КАПОТОМ' : 'UNDER THE HOOD'}</p>
+  <h1>{ru ? 'Технологии QueryDock' : 'QueryDock tech stack'}</h1>
+  <p class="lead">{ru ? 'Технологический стек — инструменты, из которых собраны сайт и продукт. QueryDock — браузерная SQL-песочница для небольших экспериментов с запросами и локальных черновиков.' : 'A tech stack is the set of tools used to build and deliver a product. QueryDock is a browser SQL playground for focused experiments and local drafts.'}</p>
+  <section><h2>{ru ? 'Этот сайт' : 'This website'}</h2><p>{ru ? 'Публичные страницы созданы на Astro 7 и опубликованы через Cloudflare Worker. Worker отдаёт страницы сайта и направляет маршруты песочницы в отдельное приложение QueryDock. API для опубликованных рабочих пространств работает в Google Cloud Run.' : 'Astro 7 builds these public pages. A Cloudflare Worker serves them and routes playground paths to the separate QueryDock app. The API for published workspaces runs on Google Cloud Run.'}</p></section>
+  <section><h2>{ru ? 'Продукт' : 'The product'}</h2><p>{ru ? 'В песочнице выполняется SQL прямо в браузере: PGlite даёт совместимый с PostgreSQL движок, рядом доступны SQLite и DuckDB. Черновики остаются на устройстве, пока вы явно не сохраните рабочее пространство онлайн. Здесь пока нет выполнения GraphQL.' : 'The playground runs SQL in your browser: PGlite provides a PostgreSQL-compatible engine alongside SQLite and DuckDB. Drafts stay on your device until you explicitly save a workspace online. GraphQL execution is not available here.'}</p><p><a href={`${home}#engines`}>{ru ? 'Выбрать движок SQL' : 'Explore SQL engines'} ↗</a></p></section>
+  <section><h2>{ru ? 'Наши инструменты здесь' : 'Our tools used here'}</h2><p>{ru ? 'API QueryDock на Go использует DALgo для работы с данными в Firestore. Это серверная часть сохранения; SQL в браузере выполняют движки выше.' : 'The QueryDock Go API uses DALgo to work with data in Firestore. That supports online saving; the browser engines above execute the SQL.'} <a href="https://dalgo.io/">DALgo ↗</a></p></section>
+  <section><h2>{ru ? 'Связанные проекты' : 'Related projects'}</h2><p>{ru ? 'QueryDock входит в семейство DataTug. Если эксперимент с запросом перерастёт в исследование данных, откройте DataTug.' : 'QueryDock is part of the DataTug family. When a query experiment grows into deeper data exploration, continue in DataTug.'} <a href="https://datatug.app/">DataTug ↗</a></p></section>
+</article>
+<style>
+  .tech-stack { max-width: 860px; padding-block: 4rem 6rem; }
+  .tech-stack nav { margin-bottom: 2rem; }
+  .tech-stack h1 { margin: .3rem 0 1rem; font-size: clamp(2.3rem, 5vw, 4rem); }
+  .tech-stack .lead { line-height: 1.7; max-width: 68ch; margin-bottom: 3rem; }
+  .tech-stack section { border-top: 1px solid var(--border, #ccc); padding-block: 1.5rem; }
+  .tech-stack h2 { margin: 0 0 .7rem; }
+  .tech-stack section p { max-width: 70ch; line-height: 1.7; }
+</style>
