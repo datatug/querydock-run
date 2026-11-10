@@ -4,7 +4,7 @@
 
 QueryDock — бесплатная SQL-песочница в браузере для PostgreSQL (PGlite), SQLite и DuckDB, часть семейства DataTug.
 
-No sign-up is required to run queries. Schema, seed data and drafts stay in this browser. Sign in to save a workspace online. Examples and embeds are available. GraphQL is coming soon and is not executable yet.
+No sign-up is required to run queries. Schema, seed data and drafts stay in this browser. Sign in to save a workspace online. Examples and embeds are available. QueryDock does not execute TugQL or GraphQL queries.
 
 This file restates public pages on https://querydock.run/. It does not add product behaviour beyond those pages. Guide pages explain an engine. They do not execute SQL. Open the playground to run a query.
 
@@ -30,11 +30,7 @@ Examples use fictional data. You can run and clone them in the browser with no s
 
 Embeds: an account-free embed is https://querydock.run/sql/embed (and https://querydock.run/sql/embed/). The example is carried only in the URL fragment, which the server does not receive. A saved revision can be embedded at https://querydock.run/sql/{id}/{revision}/embed. Other paths are not frameable embeds.
 
-Open in DataTug sends the workspace to a separate product at https://datatug.app/. An unchanged saved workspace uses its public id, revision and digest. Local or edited workspaces transfer the complete content in the URL fragment or through an explicit JSON download and import.
-
-## GraphQL
-
-GraphQL is coming soon. There is no GraphQL editor and GraphQL cannot be executed. English: https://querydock.run/en/graphql/ — Russian: https://querydock.run/ru/graphql/ — While that is unfinished, run SQL in the playground.
+Open in DataTug sends the workspace to a separate product at https://datatug.app/. TugQL is the SQL-like query language documented at https://tugql.org/; the present QueryDock editors execute SQL, not TugQL. An unchanged saved workspace uses its public id, revision and digest. Local or edited workspaces transfer the complete content in the URL fragment or through an explicit JSON download and import.
 
 ## Guides in both languages
 
