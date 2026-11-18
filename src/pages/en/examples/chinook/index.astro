@@ -1,0 +1,62 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+
+const catalog = 'b35b0e6a019aebe18b409f1e3c90c80fcbb1488f3fe3b4b7ca386eb024a7234f';
+const examples = [
+  {
+    id: 'join',
+    title: 'Join customers to invoices',
+    digest: '957a2c73d87a4224551881b500f9836a81822388955380b0ed9869edb032ff33',
+    explanation: 'An INNER JOIN returns customer and invoice pairs with matching CustomerId values. The ORDER BY makes their sequence explicit.',
+    sql: `SELECT c.CustomerId, c.FirstName, i.InvoiceId
+FROM Customer AS c
+INNER JOIN Invoice AS i ON i.CustomerId = c.CustomerId
+ORDER BY c.CustomerId, i.InvoiceId;`,
+  },
+  {
+    id: 'aggregate-country',
+    title: 'Summarize invoices by billing country',
+    digest: '9ce8907eabc47ba2c09c737e57b6a928004026de41ff913433fe17321d387ce3',
+    explanation: 'GROUP BY forms a row per billing country. COUNT, SUM and AVG summarize its invoice rows; ROUND controls displayed decimal precision.',
+    sql: `SELECT BillingCountry, COUNT(*) AS InvoiceCount,
+       ROUND(SUM(Total), 2) AS Revenue, ROUND(AVG(Total), 2) AS AverageInvoice
+FROM Invoice
+GROUP BY BillingCountry
+ORDER BY BillingCountry;`,
+  },
+  {
+    id: 'filter-where',
+    title: 'Filter before aggregation',
+    digest: '8c9deb99e9c0f7e1d95e66693747e70bccc449b1811a6b1ce707e6c4dc00ab11',
+    explanation: 'WHERE keeps invoices for CustomerId 1 through 3 before GROUP BY counts and sums them.',
+    sql: `SELECT CustomerId, COUNT(*) AS InvoiceCount, ROUND(SUM(Total), 2) AS CustomerTotal
+FROM Invoice
+WHERE CustomerId <= 3
+GROUP BY CustomerId
+ORDER BY CustomerId;`,
+  },
+];
+---
+<Layout locale="en" title="Chinook SQL examples — joins, groups and filters" description="Read three SQL queries over QueryDock's curated Chinook sample, then open their pinned SQLite workspaces to run or change them without signing up." suffix="examples/chinook/" branded={false} pageType="TechArticle">
+  <article class="wrap detail-hero">
+    <p><a class="back" href="/en/sql/sqlite/">← SQLite playground</a></p>
+    <p class="eyebrow">SQL / SQLITE / CHINOOK</p>
+    <h1>Chinook SQL examples</h1>
+    <p class="lead">Use the curated Chinook subset with Employee, Customer and Invoice tables to try joins, aggregates and filters in SQLite. The dataset and each query are pinned in QueryDock's public assets.</p>
+    <p>These are SQL queries. QueryDock does not execute <a href="https://tugql.org/">TugQL</a> in its current SQL editors.</p>
+  </article>
+  <section class="wrap" aria-labelledby="dataset-heading">
+    <h2 id="dataset-heading">Sample dataset</h2>
+    <p>The <a href="https://github.com/datatug/datatug-apps/blob/7bc1239f9a752790e26510c345e4792317ed3c95/apps/querydock-app/public/curated/b35b0e6a019aebe18b409f1e3c90c80fcbb1488f3fe3b4b7ca386eb024a7234f.json">pinned curated catalog</a> identifies a transformed subset of <a href="https://chinook.demodb.dev/">Chinook</a>. Each link below opens its complete dataset and one query. See <a href="/en/privacy/">QueryDock privacy</a> before publishing a workspace online or transferring it to DataTug.</p>
+  </section>
+  {examples.map(example => <section class="wrap example" aria-labelledby={`${example.id}-heading`}>
+    <h2 id={`${example.id}-heading`}>{example.title}</h2>
+    <p>{example.explanation}</p>
+    <pre class="code-sample"><code>{example.sql}</code></pre>
+    <p><a class="button" href={`https://querydock.run/sql/example/${catalog}/${example.id}/${example.digest}/`}>Open pinned example in QueryDock ↗</a></p>
+  </section>)}
+</Layout>
+<style>
+  .example { padding-block: 2rem; }
+  .example pre { overflow-x: auto; padding: 1.25rem; }
+</style>

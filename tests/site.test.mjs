@@ -210,6 +210,28 @@ test('generated pages use the canonical English root and retain localized non-ro
  assert.equal((missing.match(/<script\b/g)||[]).length,3);
  assert.doesNotMatch(missing,/application\/ld\+json/);
 });
+test('Chinook examples are crawlable static content linked to pinned SQL workspaces',async()=>{
+ const html=await readFile('dist/en/examples/chinook/index.html','utf8');
+ const sitemap=await readFile('dist/sitemap-0.xml','utf8');
+ assert.match(html,/<h1\b[^>]*>Chinook SQL examples<\/h1>/);
+ assert.ok(html.includes('rel="canonical" href="https://querydock.run/en/examples/chinook/"'));
+ assert.ok(sitemap.includes('<loc>https://querydock.run/en/examples/chinook/</loc>'));
+ for(const id of ['join','aggregate-country','filter-where']) {
+  assert.ok(html.includes(`/sql/example/b35b0e6a019aebe18b409f1e3c90c80fcbb1488f3fe3b4b7ca386eb024a7234f/${id}/`));
+ }
+ assert.ok(html.includes('INNER JOIN Invoice'));
+ assert.ok(html.includes('GROUP BY BillingCountry'));
+ assert.ok(html.includes('GROUP BY CustomerId'));
+ const response=await request('/en/examples/chinook/',{
+  QUERYDOCK_APP:{fetch:async()=>assert.fail('Static article must not be served by the app')},
+  ASSETS:{fetch:async req=>{
+   assert.equal(new URL(req.url).pathname,'/en/examples/chinook/');
+   return new Response(html,{headers:{'Content-Type':'text/html; charset=utf-8'}});
+  }},
+ });
+ assert.equal(response.status,200);
+ assert.ok((await response.text()).includes('Chinook SQL examples'));
+});
 
 test('only exact public home and localized tool routes reach the app binding',async()=>{
  const seen=[]; const QUERYDOCK_APP={fetch:async req=>{seen.push(new URL(req.url).pathname);return new Response('tool',{headers:{'Referrer-Policy':'no-referrer'}});}};
