@@ -4,7 +4,7 @@
 
 QueryDock — бесплатная SQL-песочница в браузере для PostgreSQL (PGlite), SQLite и DuckDB, часть семейства DataTug.
 
-No sign-up is required to run queries. Schema, seed data and drafts stay in this browser. Sign in to save a workspace online. Examples and embeds are available. GraphQL is coming soon and is not executable yet.
+No sign-up is required to run queries. Schema, seed data and drafts stay in this browser. Sign in to save a workspace online. Examples and embeds are available. QueryDock does not execute TugQL or GraphQL queries.
 
 ## Engines
 
@@ -33,8 +33,6 @@ No sign-up is required to run queries. Schema, seed data and drafts stay in this
 - SQLite guide, Russian: https://querydock.run/ru/sql/sqlite/
 - DuckDB guide, English: https://querydock.run/en/sql/duckdb/
 - DuckDB guide, Russian: https://querydock.run/ru/sql/duckdb/
-- GraphQL, coming soon, English: https://querydock.run/en/graphql/
-- GraphQL, coming soon, Russian: https://querydock.run/ru/graphql/
 - Privacy, English: https://querydock.run/en/privacy/
 - Privacy, Russian: https://querydock.run/ru/privacy/
 - Terms, English: https://querydock.run/en/terms/
@@ -45,6 +43,7 @@ No sign-up is required to run queries. Schema, seed data and drafts stay in this
 - QueryDock: https://querydock.run/
 - QueryDock in Russian: https://querydock.run/ru/
 - DataTug: https://datatug.app/
+- TugQL language and documentation: https://tugql.org/
 - Landing guides and Cloudflare routing: https://github.com/datatug/querydock-run
 - Extended notes: https://querydock.run/llms-full.txt
 

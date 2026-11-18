@@ -5,7 +5,7 @@ export default defineConfig({
  trailingSlash: 'always',
  integrations: [sitemap({
   // The generated /en/ document is an internal root fallback, not a public URL.
-  filter: page => page !== 'https://querydock.run/en/',
+  filter: page => page !== 'https://querydock.run/en/' && !page.endsWith('/graphql/'),
   customPages: ['https://querydock.run/', 'https://querydock.run/en/examples/', 'https://querydock.run/ru/examples/'],
  })],
 });

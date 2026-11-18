@@ -124,7 +124,7 @@ test('generated pages use the canonical English root and retain localized non-ro
   'ru/sql/sqlite/':'SQLite онлайн-песочница — изучайте SQL в браузере | QueryDock',
   'ru/sql/duckdb/':'DuckDB онлайн-песочница — аналитический SQL в браузере | QueryDock',
  };
- for(const locale of ['en','ru']) for(const suffix of ['','graphql/','privacy/','terms/','about/tech-stack/','sql/postgres/','sql/sqlite/','sql/duckdb/']) {
+ for(const locale of ['en','ru']) for(const suffix of ['','privacy/','terms/','about/tech-stack/','sql/postgres/','sql/sqlite/','sql/duckdb/']) {
   const html=await readFile(`dist/${locale}/${suffix}index.html`,'utf8');
   const english=suffix?`https://querydock.run/en/${suffix}`:'https://querydock.run/';
   const russian=`https://querydock.run/ru/${suffix}`;
@@ -151,6 +151,7 @@ test('generated pages use the canonical English root and retain localized non-ro
   const graph=JSON.parse(ld[1]);
   const nodes=graph['@graph'];
   assert.ok(nodes.some(node=>node['@type']==='WebSite'&&Array.isArray(node.inLanguage)&&node.inLanguage.includes(locale)));
+  if(locale==='en'&&!suffix)assert.ok(nodes.some(node=>node['@type']==='WebApplication'&&node.name==='QueryDock'&&node.isAccessibleForFree===true));
   assert.equal(nodes.find(node=>node['@type']==='Organization').name,'DataTug');
   assert.equal(nodes.find(node=>node['@type']==='Organization').url,'https://datatug.app/');
   const page=nodes.find(node=>['TechArticle','WebPage','AboutPage'].includes(node['@type']));
@@ -182,8 +183,14 @@ test('generated pages use the canonical English root and retain localized non-ro
   assert.match(html,/<script[^>]*src="\/theme\.js"/);
   assert.match(html,/id="theme-mode"/);
   assert.doesNotMatch(html,/href="\/sql\//);
-  if(suffix==='graphql/')assert.ok(html.includes(locale==='en'?'Coming soon':'Скоро'));
-  if(suffix==='graphql/'||suffix.startsWith('sql/'))assert.ok(html.includes(`href="${locale==='en'?'/':'/ru/'}#engines"`));
+  if(suffix.startsWith('sql/'))assert.ok(html.includes(`href="${locale==='en'?'/':'/ru/'}#engines"`));
+ }
+ for(const locale of ['en','ru']) {
+  const html=await readFile(`dist/${locale}/graphql/index.html`,'utf8');
+  assert.ok(html.includes('noindex,follow'));
+  assert.ok(html.includes(locale==='en'?'GraphQL is not supported':'GraphQL не поддерживается'));
+  assert.ok(!locations.includes(`https://querydock.run/${locale}/graphql/`));
+  assert.ok(!html.includes('rel="canonical"'));
  }
  for(const locale of ['en','ru']) assert.ok(locations.some(url=>url===`https://querydock.run/${locale}/examples/`));
  const missing=await readFile('dist/404.html','utf8');
@@ -250,7 +257,7 @@ test('llms files are text/plain and describe QueryDock without invented counts',
  assert.ok(full.length>short.length);
  for(const [name,body] of [['llms.txt',short],['llms-full.txt',full]]){
   assert.match(body,/^# QueryDock\n\n> QueryDock is a free in-browser SQL playground/);
-  for(const phrase of ['PGlite','SQLite','DuckDB','No sign-up is required to run queries','Sign in to save','embed','/examples/','coming soon','https://datatug.app/','https://querydock.run/en/sql/postgres/','https://querydock.run/ru/sql/postgres/','https://querydock.run/en/sql/sqlite/','https://querydock.run/ru/sql/sqlite/','https://querydock.run/en/sql/duckdb/','https://querydock.run/ru/sql/duckdb/','https://querydock.run/en/graphql/','https://querydock.run/ru/graphql/','https://querydock.run/en/examples/','https://querydock.run/ru/examples/']) assert.ok(body.includes(phrase),`${name} missing ${phrase}`);
+  for(const phrase of ['PGlite','SQLite','DuckDB','No sign-up is required to run queries','Sign in to save','embed','/examples/','https://tugql.org/','https://datatug.app/','https://querydock.run/en/sql/postgres/','https://querydock.run/ru/sql/postgres/','https://querydock.run/en/sql/sqlite/','https://querydock.run/ru/sql/sqlite/','https://querydock.run/en/sql/duckdb/','https://querydock.run/ru/sql/duckdb/','https://querydock.run/en/examples/','https://querydock.run/ru/examples/']) assert.ok(body.includes(phrase),`${name} missing ${phrase}`);
   assert.equal(linksPublicRepo(body),true,`${name} public repo`);
   assert.doesNotMatch(body,/\b\d[\d,]*\s+(users|customers|developers|teams|stars)\b/i,name);
   let appCalled=false;
