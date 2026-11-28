@@ -182,7 +182,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  undici@7.29.1: 8.13.1
+  undici@7.29.1: 8.14.0
 
 importers:
 
